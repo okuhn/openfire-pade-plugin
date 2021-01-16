@@ -63,7 +63,7 @@ public class ProxyConnection
         
         QueuedThreadPool queuedThreadpool= new QueuedThreadPool(1);
         queuedThreadpool.setMinThreads(1);
-        queuedThreadpool.setName("HttpClient");
+        queuedThreadpool.setName("ProxyConnection-HttpClient");
 
         
 		HttpClient httpClient = new HttpClient(sec);
