@@ -48,7 +48,7 @@ public class ProxyConnection
     private ProxyWebSocket socket;
     private boolean connected = false;
 
-    public ProxyConnection(URI uri, List<String> subprotocol, SslContextFactory sec, int connectTimeout)
+    public ProxyConnection(URI uri, List<String> subprotocol, HttpClient httpClient, int connectTimeout)
     {
         Log.info("ProxyConnection " + uri + " " + subprotocol);
 
@@ -61,14 +61,6 @@ public class ProxyConnection
         	isSecure = false;
         }
         
-        QueuedThreadPool queuedThreadpool= new QueuedThreadPool(1);
-        queuedThreadpool.setMinThreads(1);
-        queuedThreadpool.setName("ProxyConnection-HttpClient");
-
-        
-		HttpClient httpClient = new HttpClient(sec);
-        httpClient.setExecutor(queuedThreadpool);
-
         client = new WebSocketClient(httpClient);
         proxySocket = new ProxySocket(this);
 

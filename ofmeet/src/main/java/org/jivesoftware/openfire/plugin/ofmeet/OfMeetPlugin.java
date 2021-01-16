@@ -22,10 +22,12 @@ package org.jivesoftware.openfire.plugin.ofmeet;
 import org.dom4j.Element;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlets.*;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.servlet.*;
 import org.eclipse.jetty.websocket.servlet.*;
 import org.eclipse.jetty.websocket.server.*;
@@ -365,7 +367,13 @@ public class OfMeetPlugin implements Plugin, SessionEventListener, ClusterEventL
 
             ProxyWebSocket socket = null;
             SslContextFactory clientSslContextFactory = SslContextFactoryProvider.getClientSslContextFactory();
-            ProxyConnection proxyConnection = new ProxyConnection(URI.create(url), protocols, clientSslContextFactory, 10000);
+            
+            QueuedThreadPool queuedThreadPool = QueuedThreadPoolProvider.getQueuedThreadPool();
+            
+    		HttpClient httpClient = new HttpClient(clientSslContextFactory);
+            httpClient.setExecutor(queuedThreadPool);
+
+            ProxyConnection proxyConnection = new ProxyConnection(URI.create(url), protocols, httpClient, 10000);
 
             socket = new ProxyWebSocket();
             socket.setProxyConnection(proxyConnection);
