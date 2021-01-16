@@ -18,6 +18,7 @@ import javax.security.auth.callback.*;
 
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eclipse.jetty.websocket.api.Session;
@@ -60,7 +61,14 @@ public class ProxyConnection
         	isSecure = false;
         }
         
+        QueuedThreadPool queuedThreadpool= new QueuedThreadPool(1);
+        queuedThreadpool.setMinThreads(1);
+        queuedThreadpool.setName("HttpClient");
+
+        
 		HttpClient httpClient = new HttpClient(sec);
+        httpClient.setExecutor(queuedThreadpool);
+
         client = new WebSocketClient(httpClient);
         proxySocket = new ProxySocket(this);
 
