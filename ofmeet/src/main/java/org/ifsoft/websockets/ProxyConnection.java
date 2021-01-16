@@ -16,6 +16,7 @@ import javax.net.*;
 import javax.net.ssl.*;
 import javax.security.auth.callback.*;
 
+import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
@@ -37,32 +38,30 @@ import org.xmpp.packet.*;
 
 public class ProxyConnection
 {
-    private static Logger Log = LoggerFactory.getLogger( "ProxyConnection" );
-    private boolean isSecure = false;
+    private final static Logger Log = LoggerFactory.getLogger( "ProxyConnection" );
+    
+    private final boolean isSecure;
+    private final WebSocketClient client;
+    private final ProxySocket proxySocket;
+
     private ProxyWebSocket socket;
     private boolean connected = false;
-    private WebSocketClient client = null;
-    private ProxySocket proxySocket = null;
-    private List<String> subprotocol = null;
 
-    public ProxyConnection(URI uri, List<String> subprotocol, int connectTimeout)
+    public ProxyConnection(URI uri, List<String> subprotocol, SslContextFactory sec, int connectTimeout)
     {
         Log.info("ProxyConnection " + uri + " " + subprotocol);
 
-        this.subprotocol = subprotocol;
-
-        SslContextFactory sec = new SslContextFactory();
-
         if("wss".equals(uri.getScheme()))
         {
-            sec.setValidateCerts(false);
-
             Log.debug("ProxyConnection - SSL");
             getSSLContext();
             isSecure = true;
+        } else {
+        	isSecure = false;
         }
-
-        client = new WebSocketClient(sec);
+        
+		HttpClient httpClient = new HttpClient(sec);
+        client = new WebSocketClient(httpClient);
         proxySocket = new ProxySocket(this);
 
         try
@@ -121,7 +120,6 @@ public class ProxyConnection
     {
         Log.debug("ProxyConnection - onClose " + reason + " " + code);
         connected = false;
-
         if (this.socket != null) this.socket.disconnect();
     }
 
@@ -143,10 +141,6 @@ public class ProxyConnection
 
     public boolean isConnected() {
         return connected;
-    }
-
-    public void setSecure(boolean isSecure) {
-        this.isSecure = isSecure;
     }
 
     private SSLContext getSSLContext()
@@ -196,7 +190,6 @@ public class ProxyConnection
         private Session session;
         private ProxyConnection proxyConnection;
         private String lastMessage = null;
-        private String ipaddr = null;
 
         public ProxySocket(ProxyConnection proxyConnection)
         {
